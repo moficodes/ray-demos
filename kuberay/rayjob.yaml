@@ -1,0 +1,11 @@
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: rayjob-sample
+spec:
+  entrypoint: python -c "import ray; ray.init(); print(ray.cluster_resources())"
+  runtimeEnvYAML: |
+    pip:
+      - requests==2.26.0
+  clusterSelector:
+    "ray.io/cluster":  "raycluster-demo"

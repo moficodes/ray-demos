@@ -1,0 +1,52 @@
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: raycluster-demo
+spec:
+  rayVersion: '2.38.0' # should match the Ray version in the image of the containers
+  headGroupSpec:
+    rayStartParams:
+      dashboard-host: '0.0.0.0'
+    #pod template
+    template:
+      spec:
+        containers:
+          - name: ray-head
+            image: rayproject/ray:2.38.0-py312
+            ports:
+              - containerPort: 6379
+                name: gcs-server
+              - containerPort: 8265 # Ray dashboard
+                name: dashboard
+              - containerPort: 10001
+                name: client
+            resources:
+              limits:
+                cpu: "2"
+              requests:
+                cpu: "500m"
+  workerGroupSpecs:
+    # the pod replicas in this group typed worker
+    - replicas: 1
+      minReplicas: 1
+      maxReplicas: 5
+      # logical group name, for this called small-group, also can be functional
+      groupName: small-group
+      rayStartParams: {}
+      #pod template
+      template:
+        spec:
+          containers:
+            - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
+              image: rayproject/ray:2.38.0-py312
+              lifecycle:
+                preStop:
+                  exec:
+                    command: [ "/bin/sh","-c","ray stop" ]
+              resources:
+                limits:
+                  cpu: "2"
+                requests:
+                  cpu: "500m"
